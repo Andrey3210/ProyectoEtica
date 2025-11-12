@@ -153,13 +153,6 @@ export default function ChatbotANMI() {
                 Asistente Nutricional Materno Infantil
               </p>
             </div>
-            <button 
-              onClick={manejarInstalacion}
-              className="btn btn-light btn-sm fw-bold"
-              style={{ fontSize: '0.85rem' }}
-            >
-              Instalar
-            </button>
           </div>
         </div>
       </div>

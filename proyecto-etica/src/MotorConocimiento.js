@@ -132,7 +132,7 @@ Evitar antes del año
 
   lactanciaVitaminas: {
     palabrasClave: [
-      'lactancia','vitaminas','vitamina d','suplementos','hierro gotas','multivitaminico',
+      'lactar','lactancia','vitaminas','vitamina d','suplementos','hierro gotas','multivitaminico',
       'calcio','omega 3','galactagogos','sube la leche','baja la leche'
     ],
     respuesta: [
