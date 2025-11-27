@@ -91,70 +91,74 @@ const AvisoResponsabilidad = ({ alAceptar }) => (
     style={{ backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1050 }}
   >
     <div
-      className="bg-white rounded-4 p-4 shadow-lg animate-scale-in"
-      style={{ maxWidth: '550px', width: '90%' }}
+      className="bg-white rounded-4 p-3 shadow-lg animate-scale-in"
+      style={{ maxWidth: '420px', width: '90%' }}
     >
-      <div className="text-center mb-4">
-        <div
-          className="mx-auto mb-3 animate-bounce-once d-flex align-items-center justify-content-center"
+      <div className="text-center mb-3">
+        {/* Logo San Marcos desde public */}
+        <img
+          src={`${process.env.PUBLIC_URL}/sanMarcos.png`}
+          alt="Logo Universidad Nacional Mayor de San Marcos"
           style={{
-            width: '80px',
-            height: '80px',
-            background: 'linear-gradient(135deg, #198754, #0f5132)',
-            borderRadius: '50%',
+            height: '60px',
+            objectFit: 'contain',
+            marginBottom: '0.5rem',
           }}
-        >
-          <Bot size={40} className="text-white" />
-        </div>
-        <h2 className="h3 fw-bold text-success mb-2">ANMI</h2>
-        <p className="text-muted small mb-0">Asistente Nutricional Materno Infantil</p>
+        />
+        <h2 className="h5 fw-bold text-success mb-1">ANMI</h2>
+        <p className="text-muted small mb-0">
+          Asistente Nutricional Materno Infantil
+        </p>
+        <p className="text-muted small mb-0">
+          Universidad Nacional Mayor de San Marcos
+        </p>
       </div>
 
       <div
         className="alert alert-warning d-flex align-items-start mb-3 rounded-3"
         role="alert"
+        style={{ fontSize: '0.9rem', padding: '0.75rem 0.75rem' }}
       >
         <AlertCircle
           className="text-warning me-2 flex-shrink-0"
-          size={24}
+          size={22}
           style={{ marginTop: '2px' }}
         />
-        <div style={{ lineHeight: '1.6' }}>
-          <h5 className="alert-heading fw-bold mb-2">⚠️ Aviso Importante</h5>
-          <p className="mb-2">
-            <strong>ANMI es una herramienta educativa</strong> que proporciona información
+        <div style={{ lineHeight: '1.5' }}>
+          <h5 className="alert-heading fw-bold mb-2" style={{ fontSize: '0.95rem' }}>
+            ⚠️ Aviso importante
+          </h5>
+          <p className="mb-1">
+            <strong>ANMI es una herramienta educativa</strong> que brinda información
             general sobre nutrición infantil.
           </p>
-          <p className="mb-2">
-            <strong>No soy un profesional de la salud</strong> y no puedo:
+          <p className="mb-1">
+            <strong>No reemplaza la atención profesional</strong> y no puede:
           </p>
           <ul className="mb-2 ps-3">
             <li>Diagnosticar enfermedades</li>
             <li>Recetar medicamentos o suplementos</li>
-            <li>Proporcionar dietas personalizadas</li>
-            <li>Reemplazar la consulta médica</li>
+            <li>Elaborar dietas personalizadas</li>
           </ul>
           <p className="fw-bold text-dark mb-0">
-            Siempre consulta con tu pediatra o nutricionista para el cuidado específico de tu
-            bebé.
+            Siempre consulta con tu pediatra o nutricionista para el cuidado específico
+            de tu bebé.
           </p>
         </div>
       </div>
 
-      <div className="text-center mb-3">
-        <p className="text-muted small mb-1">
-          <strong>Desarrollado por estudiantes de la</strong>
-        </p>
-        <p className="text-success fw-bold mb-0">
-          Universidad Nacional Mayor de San Marcos
+      <div className="text-center mb-2">
+        <p className="text-muted small mb-0">
+          Desarrollado por estudiantes de la Universidad Nacional Mayor de San Marcos
         </p>
       </div>
 
       <button
         onClick={alAceptar}
-        className="btn btn-success w-100 fw-bold py-3 rounded-3 btn-hover"
+        className="btn btn-success w-100 fw-bold py-2 rounded-3 btn-hover"
+        style={{ fontSize: '0.95rem' }}
       >
-        Entiendo y Acepto
+        Entiendo y acepto
       </button>
     </div>
   </div>
