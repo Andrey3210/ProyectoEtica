@@ -576,15 +576,18 @@ El pediatra es quien debe evaluar con la curva de crecimiento.`
 // ----------------- SALIDAS ESPECIALES -----------------
 
 export const salidasEmergencia = {
-  medica: `⚠️ Esta consulta parece necesitar atención médica directa.  
-Por seguridad, lo mejor es que contactes al pediatra o acudas a tu centro de salud.  
+  medica: `⚠️ Esta consulta parece necesitar atención médica directa.
+Por seguridad, lo mejor es que contactes al pediatra o acudas a tu centro de salud.
 Ante dificultad para respirar, fiebre muy alta o decaimiento extremo, ve a emergencia de inmediato.`,
 
-  dieta: `🍽️ No puedo dar dietas personalizadas con cantidades exactas.  
+  dieta: `🍽️ No puedo dar dietas personalizadas con cantidades exactas.
 Cada bebé es distinto en edad, peso y salud. Para un plan detallado, lo más seguro es verlo con pediatra o nutricionista infantil.`,
 
-  noEncontrada: `No entendí bien la consulta o está fuera de lo que puedo responder. 😔  
-Puedo ayudarte con lactancia, anemia, alimentación complementaria, texturas, seguridad al comer y dudas generales de 0 a 2 años.`
+  fueraAlcance: `Soy un asistente para bebés y niños pequeños con foco en anemia infantil, hierro y alimentación segura de 6 a 12 meses.
+Para un adolescente o adulto lo mejor es buscar apoyo médico directo, porque las indicaciones cambian mucho según la edad.`,
+
+  noEncontrada: `No entendí bien la consulta o quizás está fuera de mi alcance. 😔
+Puedo ayudarte sobre anemia infantil, alimentos ricos en hierro para bebés, preparación segura de alimentos y nutrición de 6 a 12 meses.`
 };
 
 // ----------------- DETECTORES DE EMERGENCIA Y DIETA -----------------
@@ -614,18 +617,31 @@ export const detectarSolicitudDieta = (mensaje) => {
   return palabrasDieta.some(p => txtNormalizado.includes(normalizar(p)));
 };
 
+export const detectarFueraDeAlcanceEdad = (mensaje) => {
+  const txtNormalizado = normalizar(mensaje);
+  // Detecta edades mayores a 2 años o menciones claras de adolescente/adulto
+  const coincidenciaEdad = txtNormalizado.match(/(\d{1,2})\s*(anos|años)/);
+  if (coincidenciaEdad) {
+    const edad = parseInt(coincidenciaEdad[1], 10);
+    if (edad >= 3) return true;
+  }
+
+  const palabrasFuera = ["adolescente", "adulto", "mi edad es 15", "tengo 15", "tengo 20", "tengo 30"];
+  return palabrasFuera.some((expresion) => txtNormalizado.includes(normalizar(expresion)));
+};
+
 // ----------------- BÚSQUEDA EN BASE DE CONOCIMIENTO -----------------
 
 // Búsqueda exacta por "includes"
 const buscarExacto = (mensajeNormalizado) => {
-  for (const [, datos] of Object.entries(baseConocimiento)) {
+  for (const [clave, datos] of Object.entries(baseConocimiento)) {
     const hit = datos.palabrasClave.some(palabra => {
       const palabraNormalizada = normalizar(palabra);
       return mensajeNormalizado.includes(palabraNormalizada);
     });
     if (hit) {
       const texto = Array.isArray(datos.respuesta) ? pick(datos.respuesta) : datos.respuesta;
-      return { texto, esEmergencia: false };
+      return { clave, texto, esEmergencia: false };
     }
   }
   return null;
@@ -659,7 +675,7 @@ const buscarAproximado = (mensajeNormalizado) => {
   if (mejorClave && mejorScore >= 2) {
     const datos = baseConocimiento[mejorClave];
     const texto = Array.isArray(datos.respuesta) ? pick(datos.respuesta) : datos.respuesta;
-    return { texto, esEmergencia: false };
+    return { clave: mejorClave, texto, esEmergencia: false };
   }
 
   return null;
@@ -667,26 +683,132 @@ const buscarAproximado = (mensajeNormalizado) => {
 
 // ----------------- MOTOR PRINCIPAL (OFFLINE) -----------------
 
+const recomendacionesRapidas = {
+  anemia: [
+    "Incluye un alimento rico en hierro en cada comida principal.",
+    "Acompaña con algo de vitamina C (naranja, mandarina, tomate) para absorber mejor el hierro.",
+  ],
+  alimentosHierro: [
+    "Combina carne o sangrecita con menestras para un plato muy completo.",
+    "Evita té o café cerca de la comida para no frenar la absorción.",
+  ],
+  recetasHierro: [
+    "Deja las menestras en remojo desde la noche anterior para que sean más suaves.",
+    "Ajusta la textura: papilla, puré o en trocitos según la etapa de tu bebé.",
+  ],
+  lactanciaExclusiva: [
+    "Ofrece pecho a libre demanda: a veces succión para hambre, otras para consuelo.",
+    "Si dudas con la producción, observa pañales mojados y aumento de peso como señales clave.",
+  ],
+  alimentacionComplementaria: [
+    "Empieza con texturas suaves e ir aumentando; siempre con supervisión.",
+    "Un alimento nuevo a la vez cada 2-3 días ayuda a ver tolerancia.",
+  ],
+};
+
+const preguntasSeguimiento = {
+  anemia:
+    "¿Te han dado algún resultado de hemoglobina o indicaron suplemento? Así adapto mejor las recomendaciones.",
+  alimentacionComplementaria:
+    "¿Cuántos meses tiene tu bebé y cómo reacciona a las primeras cucharadas?",
+  lactanciaExclusiva:
+    "¿Notas dolor al amamantar o preocupación por la cantidad de leche? Puedo darte tips puntuales.",
+  extraccionLeche: "¿Necesitas conservar la leche para trabajo, estudios o salidas específicas?",
+};
+
+const palabrasClaveDestacadas = (mensaje) => {
+  const tokens = tokenizar(mensaje).filter((t) => t.length > 4);
+  const frecuencia = tokens.reduce((acc, token) => {
+    acc[token] = (acc[token] || 0) + 1;
+    return acc;
+  }, {});
+
+  return Object.entries(frecuencia)
+    .sort((a, b) => b[1] - a[1] || b[0].length - a[0].length)
+    .slice(0, 3)
+    .map(([palabra]) => palabra)
+    .filter(Boolean);
+};
+
+const construirRespuesta = ({ clave, textoBase, mensajeOriginal, esEmergencia }) => {
+  if (esEmergencia) {
+    return { texto: textoBase, esEmergencia };
+  }
+
+  const resumenUsuario = palabrasClaveDestacadas(mensajeOriginal);
+  const tips = recomendacionesRapidas[clave] || [
+    "Puedo adaptar más si me das edad del bebé y cualquier indicación médica previa.",
+    "Si algo no encaja con lo que dijo tu profesional de salud, sigue siempre sus indicaciones.",
+  ];
+  const seguimiento = preguntasSeguimiento[clave] ||
+    "¿Quieres que arme un mini-plan con horarios y porciones aproximadas para tu bebé?";
+
+  const partes = [
+    resumenUsuario.length
+      ? `He leído tu mensaje y entendí estos puntos clave: ${resumenUsuario.join(', ')}.`
+      : "He analizado tu mensaje y armé una respuesta ajustada para ti:",
+    `👉 Lo esencial: ${textoBase}`,
+    `⚡ Pasos rápidos: ${tips.join(' ')}`,
+    `🧭 Siguiente paso: ${seguimiento}`,
+  ];
+
+  return { texto: partes.join("\n\n"), esEmergencia: false };
+};
+
 export const buscarRespuesta = (mensaje) => {
   const mensajeNormalizado = normalizar(mensaje);
 
   // 1. Seguridad primero
   if (detectarEmergenciaMedica(mensajeNormalizado)) {
-    return { texto: salidasEmergencia.medica, esEmergencia: true };
+    return construirRespuesta({
+      textoBase: salidasEmergencia.medica,
+      mensajeOriginal: mensaje,
+      esEmergencia: true,
+    });
   }
 
   if (detectarSolicitudDieta(mensajeNormalizado)) {
-    return { texto: salidasEmergencia.dieta, esEmergencia: true };
+    return construirRespuesta({
+      textoBase: salidasEmergencia.dieta,
+      mensajeOriginal: mensaje,
+      esEmergencia: true,
+    });
+  }
+
+  if (detectarFueraDeAlcanceEdad(mensajeNormalizado)) {
+    return construirRespuesta({
+      textoBase: salidasEmergencia.fueraAlcance,
+      mensajeOriginal: mensaje,
+      esEmergencia: true,
+    });
   }
 
   // 2. Búsqueda exacta
   const exacta = buscarExacto(mensajeNormalizado);
-  if (exacta) return exacta;
+  if (exacta) {
+    return construirRespuesta({
+      clave: exacta.clave,
+      textoBase: exacta.texto,
+      mensajeOriginal: mensaje,
+      esEmergencia: false,
+    });
+  }
 
   // 3. Búsqueda aproximada (tokens)
   const aproximada = buscarAproximado(mensajeNormalizado);
-  if (aproximada) return aproximada;
+  if (aproximada) {
+    return construirRespuesta({
+      clave: aproximada.clave,
+      textoBase: aproximada.texto,
+      mensajeOriginal: mensaje,
+      esEmergencia: false,
+    });
+  }
 
   // 4. Si no se encontró nada
-  return { texto: salidasEmergencia.noEncontrada, esEmergencia: false };
+  return construirRespuesta({
+    textoBase: salidasEmergencia.noEncontrada,
+    mensajeOriginal: mensaje,
+    esEmergencia: false,
+  });
 };
