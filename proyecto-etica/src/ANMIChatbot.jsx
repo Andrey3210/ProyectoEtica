@@ -17,6 +17,13 @@ import {
   ArrowDown,
 } from 'lucide-react';
 import { buscarRespuesta } from './MotorConocimiento';
+import './styles/ChatStyles.css';
+import {
+  cargarChats,
+  cargarPreferencias,
+  guardarChats,
+  guardarPreferencias,
+} from './utils/storage';
 
 const TIPS_NUTRICION = [
   'Ofrece alimentos ricos en hierro como hígado, sangrecita, lentejas y pescado.',
@@ -683,53 +690,64 @@ export default function ChatbotANMI() {
     () => TIPS_NUTRICION[Math.floor(Math.random() * TIPS_NUTRICION.length)]
   );
 
-  const [temaOscuro, setTemaOscuro] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return localStorage.getItem('anmi_tema') === 'oscuro';
-  });
+  const [temaOscuro, setTemaOscuro] = useState(false);
 
-  const [tamanoFuente, setTamanoFuente] = useState(() => {
-    if (typeof window === 'undefined') return 16;
-    const guardado = localStorage.getItem('anmi_font_size');
-    return guardado ? parseInt(guardado, 10) : 16;
-  });
+  const [tamanoFuente, setTamanoFuente] = useState(16);
+
+  const [cargandoDatos, setCargandoDatos] = useState(true);
 
   const [mostrarBotonBajar, setMostrarBotonBajar] = useState(false);
 
   const finMensajesRef = useRef(null);
   const contenedorChatRef = useRef(null);
 
-  // Cargar chats al inicio
+  // Cargar chats y preferencias al inicio
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const chatsGuardados = localStorage.getItem('anmi_chats');
-    if (chatsGuardados) {
-      const chatsParseados = JSON.parse(chatsGuardados);
-      setChats(chatsParseados);
-      if (chatsParseados.length > 0) {
-        setChatActualId(chatsParseados[0].id);
-        setMensajes(chatsParseados[0].mensajes || []);
+    let cancelado = false;
+
+    const cargarTodo = async () => {
+      const preferencias = await cargarPreferencias();
+      if (!cancelado) {
+        if (preferencias.tema) {
+          setTemaOscuro(preferencias.tema === 'oscuro');
+        }
+        if (preferencias.font_size) {
+          setTamanoFuente(parseInt(preferencias.font_size, 10));
+        }
       }
-    }
+
+      const chatsPersistidos = await cargarChats();
+      if (!cancelado) {
+        setChats(chatsPersistidos);
+        if (chatsPersistidos.length > 0) {
+          setChatActualId(chatsPersistidos[0].id);
+          setMensajes(chatsPersistidos[0].mensajes || []);
+        }
+        setCargandoDatos(false);
+      }
+    };
+
+    cargarTodo();
+
+    return () => {
+      cancelado = true;
+    };
   }, []);
 
-  // Guardar chats en localStorage cada vez que cambien
+  // Guardar chats en IndexedDB cada vez que cambien
   useEffect(() => {
-    if (typeof window === 'undefined' || chats.length === 0) return;
-    console.log('Guardando chats en localStorage:', chats);
-    localStorage.setItem('anmi_chats', JSON.stringify(chats));
-  }, [chats]);
+    if (cargandoDatos) return;
+    guardarChats(chats);
+  }, [chats, cargandoDatos]);
 
   // Guardar preferencias
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem('anmi_tema', temaOscuro ? 'oscuro' : 'claro');
-  }, [temaOscuro]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem('anmi_font_size', tamanoFuente.toString());
-  }, [tamanoFuente]);
+    if (cargandoDatos) return;
+    guardarPreferencias({
+      tema: temaOscuro ? 'oscuro' : 'claro',
+      font_size: tamanoFuente.toString(),
+    });
+  }, [temaOscuro, tamanoFuente, cargandoDatos]);
 
   // Actualizar mensajes en el chat actual cada vez que cambian
   useEffect(() => {
@@ -945,145 +963,6 @@ Estoy aquí para ayudarte con información educativa sobre nutrición y prevenci
 
   return (
     <>
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        @keyframes scaleIn {
-          from {
-            opacity: 0;
-            transform: scale(0.9);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-        @keyframes slideDown {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        @keyframes slideInLeft {
-          from {
-            transform: translateX(-100%);
-          }
-          to {
-            transform: translateX(0);
-          }
-        }
-        @keyframes slideInRight {
-          from {
-            transform: translateX(100%);
-          }
-          to {
-            transform: translateX(0);
-          }
-        }
-        @keyframes bounceOnce {
-          0%, 100% { transform: scale(1); }
-          25% { transform: scale(1.05) rotate(-5deg); }
-          50% { transform: scale(1.1) rotate(5deg); }
-          75% { transform: scale(1.05) rotate(-3deg); }
-        }
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-8px); }
-        }
-        @keyframes shimmer {
-          0% { background-position: -1000px 0; }
-          100% { background-position: 1000px 0; }
-        }
-        .animate-fade-in {
-          animation: fadeIn 0.3s ease-in;
-        }
-        .animate-slide-up {
-          animation: slideUp 0.3s ease-out;
-        }
-        .animate-slide-down {
-          animation: slideDown 0.4s ease-out;
-        }
-        .animate-scale-in {
-          animation: scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .animate-bounce-once {
-          animation: bounceOnce 0.8s ease-in-out;
-        }
-        .animate-slide-in-left {
-          animation: slideInLeft 0.3s ease-out;
-        }
-        .animate-slide-in-right {
-          animation: slideInRight 0.3s ease-out;
-        }
-        .animate-float {
-          animation: float 3s ease-in-out infinite;
-        }
-        .btn-hover {
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .btn-hover:hover {
-          transform: translateY(-3px) scale(1.02);
-          box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-        }
-        .btn-hover:active {
-          transform: translateY(0) scale(0.98);
-        }
-        .hover-shadow {
-          transition: all 0.3s ease;
-        }
-        .hover-shadow:hover {
-          box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-          transform: translateX(4px);
-        }
-        .hover-primary:hover {
-          color: #0d6efd !important;
-        }
-        .hover-danger:hover {
-          color: #dc3545 !important;
-        }
-        .cursor-pointer {
-          cursor: pointer;
-        }
-        .mensaje-burbuja {
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .gradient-header {
-          background: linear-gradient(135deg, #198754 0%, #157347 50%, #0f5132 100%);
-          box-shadow: 0 4px 20px rgba(25, 135, 84, 0.3);
-        }
-        .glass-effect {
-          background: rgba(255, 255, 255, 0.1);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        .glass-effect-dark {
-          background: rgba(30, 30, 30, 0.8);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .shimmer {
-          background: linear-gradient(to right, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
-          background-size: 1000px 100%;
-          animation: shimmer 2s infinite;
-        }
-      `}</style>
-
       <Sidebar
         abierta={sidebarAbierta}
         alCerrar={() => setSidebarAbierta(false)}
