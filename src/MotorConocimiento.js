@@ -630,7 +630,15 @@ export const detectarFueraDeAlcanceEdad = (mensaje) => {
   return palabrasFuera.some((expresion) => txtNormalizado.includes(normalizar(expresion)));
 };
 
-// ----------------- BÚSQUEDA EN BASE DE CONOCIMIENTO -----------------
+// ----------------- MOTOR PRINCIPAL (OFFLINE) -----------------
+
+// ✅ Versión corta: solo devuelve el texto base, sin adornos
+function construirRespuesta({ clave, textoBase, mensajeOriginal, esEmergencia }) {
+  return {
+    texto: textoBase,
+    esEmergencia: !!esEmergencia,
+  };
+}
 
 // Búsqueda exacta por "includes"
 const buscarExacto = (mensajeNormalizado) => {
@@ -679,80 +687,6 @@ const buscarAproximado = (mensajeNormalizado) => {
   }
 
   return null;
-};
-
-// ----------------- MOTOR PRINCIPAL (OFFLINE) -----------------
-
-const recomendacionesRapidas = {
-  anemia: [
-    "Incluye un alimento rico en hierro en cada comida principal.",
-    "Acompaña con algo de vitamina C (naranja, mandarina, tomate) para absorber mejor el hierro.",
-  ],
-  alimentosHierro: [
-    "Combina carne o sangrecita con menestras para un plato muy completo.",
-    "Evita té o café cerca de la comida para no frenar la absorción.",
-  ],
-  recetasHierro: [
-    "Deja las menestras en remojo desde la noche anterior para que sean más suaves.",
-    "Ajusta la textura: papilla, puré o en trocitos según la etapa de tu bebé.",
-  ],
-  lactanciaExclusiva: [
-    "Ofrece pecho a libre demanda: a veces succión para hambre, otras para consuelo.",
-    "Si dudas con la producción, observa pañales mojados y aumento de peso como señales clave.",
-  ],
-  alimentacionComplementaria: [
-    "Empieza con texturas suaves e ir aumentando; siempre con supervisión.",
-    "Un alimento nuevo a la vez cada 2-3 días ayuda a ver tolerancia.",
-  ],
-};
-
-const preguntasSeguimiento = {
-  anemia:
-    "¿Te han dado algún resultado de hemoglobina o indicaron suplemento? Así adapto mejor las recomendaciones.",
-  alimentacionComplementaria:
-    "¿Cuántos meses tiene tu bebé y cómo reacciona a las primeras cucharadas?",
-  lactanciaExclusiva:
-    "¿Notas dolor al amamantar o preocupación por la cantidad de leche? Puedo darte tips puntuales.",
-  extraccionLeche: "¿Necesitas conservar la leche para trabajo, estudios o salidas específicas?",
-};
-
-const palabrasClaveDestacadas = (mensaje) => {
-  const tokens = tokenizar(mensaje).filter((t) => t.length > 4);
-  const frecuencia = tokens.reduce((acc, token) => {
-    acc[token] = (acc[token] || 0) + 1;
-    return acc;
-  }, {});
-
-  return Object.entries(frecuencia)
-    .sort((a, b) => b[1] - a[1] || b[0].length - a[0].length)
-    .slice(0, 3)
-    .map(([palabra]) => palabra)
-    .filter(Boolean);
-};
-
-const construirRespuesta = ({ clave, textoBase, mensajeOriginal, esEmergencia }) => {
-  if (esEmergencia) {
-    return { texto: textoBase, esEmergencia };
-  }
-
-  const resumenUsuario = palabrasClaveDestacadas(mensajeOriginal);
-  const tips = recomendacionesRapidas[clave] || [
-    "Puedo adaptar más si me das edad del bebé y cualquier indicación médica previa.",
-    "Si algo no encaja con lo que dijo tu profesional de salud, sigue siempre sus indicaciones.",
-  ];
-  const seguimiento = preguntasSeguimiento[clave] ||
-    "¿Quieres que arme un mini-plan con horarios y porciones aproximadas para tu bebé?";
-
-  const partes = [
-    resumenUsuario.length
-      ? `He leído tu mensaje y entendí estos puntos clave: ${resumenUsuario.join(', ')}.`
-      : "He analizado tu mensaje y armé una respuesta ajustada para ti:",
-    `👉 Lo esencial: ${textoBase}`,
-    `⚡ Pasos rápidos: ${tips.join(' ')}`,
-    `🧭 Siguiente paso: ${seguimiento}`,
-  ];
-
-  return { texto: partes.join("\n\n"), esEmergencia: false };
 };
 
 export const buscarRespuesta = (mensaje) => {
