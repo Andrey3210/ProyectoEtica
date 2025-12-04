@@ -121,7 +121,7 @@ const AvisoResponsabilidad = ({ alAceptar }) => (
       style={{ maxWidth: '420px', width: '90%' }}
     >
       <div className="text-center mb-3">
-        {/* Logo San Marcos desde public */}
+        {/* Logo San Marcos */}
         <img
           src={`${process.env.PUBLIC_URL}/sanMarcos.png`}
           alt="Logo Universidad Nacional Mayor de San Marcos"
