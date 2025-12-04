@@ -4,8 +4,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // ⚠️ SEGURIDAD: La clave API debe estar en variables de entorno, nunca hardcodeada
-const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY;
-
+const GEMINI_API_KEY = 'AIzaSyCvCT1OHMjVXcRJjcWvwPHkoaeTV0tqYwI';
 if (!GEMINI_API_KEY) {
   console.error('❌ REACT_APP_GEMINI_API_KEY no está configurada. Por favor, crea un archivo .env con tu clave API.');
   throw new Error('REACT_APP_GEMINI_API_KEY no está configurada. Verifica tu archivo .env');
