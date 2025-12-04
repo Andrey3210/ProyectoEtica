@@ -45,27 +45,6 @@ function App() {
 
   return (
     <div>
-      <div className="d-flex justify-content-between align-items-center px-3 py-2 bg-light border-bottom">
-        <div className="d-flex align-items-center gap-2">
-          <span className={`badge ${estaOffline ? 'bg-warning text-dark' : 'bg-success'}`}>
-            {estaOffline ? 'Modo sin conexión' : 'Conexión establecida'}
-          </span>
-          <small className="text-muted">
-            {estaOffline
-              ? 'Puedes seguir usando tu historial guardado'
-              : 'La app guardará los cambios automáticamente'}
-          </small>
-        </div>
-        {isReadyForInstall && (
-          <button
-            onClick={downloadApp}
-            className="btn btn-success btn-sm fw-bold"
-            style={{ fontSize: '0.85rem' }}
-          >
-            Instalar
-          </button>
-        )}
-      </div>
       <ANMIChatbot estaOffline={estaOffline} />
     </div>
   );
