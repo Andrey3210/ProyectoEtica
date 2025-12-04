@@ -16,6 +16,8 @@ import {
   Settings,
   ArrowDown,
 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';          
+import remarkGfm from 'remark-gfm';                  
 import { buscarRespuesta } from './MotorConocimiento';
 import { obtenerRespuestaInteligente, setForzarModoOffline } from './services/geminiService';
 import './styles/ChatStyles.css';
@@ -54,6 +56,7 @@ const MensajeChat = ({ mensaje, esBot, temaOscuro }) => (
         <Bot className="text-white" size={20} />
       </div>
     )}
+
     <div
       className="px-4 py-3 rounded-4 animate-slide-up"
       style={{
@@ -72,10 +75,24 @@ const MensajeChat = ({ mensaje, esBot, temaOscuro }) => (
           : '0 4px 16px rgba(25, 135, 84, 0.3)',
       }}
     >
-      <p className="mb-0" style={{ whiteSpace: 'pre-line', lineHeight: '1.7' }}>
-        {mensaje}
-      </p>
+      {/* 👇 Wrapper con clase, sin usar className en ReactMarkdown */}
+      <div className="mb-0" style={{ lineHeight: '1.7' }}>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
+            p: ({ node, ...props }) => (
+              <p {...props} style={{ marginBottom: '0.5rem', lineHeight: '1.7' }} />
+            ),
+            li: ({ node, ...props }) => (
+              <li {...props} style={{ marginBottom: '0.25rem', lineHeight: '1.7' }} />
+            ),
+          }}
+        >
+          {mensaje}
+        </ReactMarkdown>
+      </div>
     </div>
+
     {!esBot && (
       <div
         className="rounded-circle d-flex align-items-center justify-content-center ms-2"
@@ -92,6 +109,7 @@ const MensajeChat = ({ mensaje, esBot, temaOscuro }) => (
     )}
   </div>
 );
+
 
 const AvisoResponsabilidad = ({ alAceptar }) => (
   <div
@@ -807,7 +825,7 @@ export default function ChatbotANMI({ estaOffline = false }) {
   // Actualizar mensajes en el chat actual cada vez que cambian
   useEffect(() => {
     if (!chatActualId || mensajes.length === 0) return;
-    
+
     setChats((prevChats) => {
       const chatsActualizados = prevChats.map((chat) =>
         chat.id === chatActualId
@@ -833,7 +851,7 @@ export default function ChatbotANMI({ estaOffline = false }) {
   // Detectar si el usuario está cerca del final del chat
   useEffect(() => {
     const contenedor = contenedorChatRef.current;
-    
+
     if (!contenedor) return;
 
     const manejarScroll = () => {
@@ -845,7 +863,7 @@ export default function ChatbotANMI({ estaOffline = false }) {
 
     contenedor.addEventListener('scroll', manejarScroll);
     setTimeout(() => manejarScroll(), 100);
-    
+
     return () => {
       contenedor.removeEventListener('scroll', manejarScroll);
     };
@@ -855,11 +873,7 @@ export default function ChatbotANMI({ estaOffline = false }) {
     if (!mostrarAviso && mensajes.length === 0 && chatActualId) {
       setMensajes([
         {
-          texto: `¡Hola! Soy ANMI, tu Asistente Nutricional Materno Infantil 👶
-
-Estoy aquí para ayudarte con información educativa sobre nutrición y prevención de anemia en bebés de 6 a 12 meses.
-
-¿En qué puedo ayudarte hoy?`,
+          texto: `¡Hola! Soy ANMI, tu Asistente Nutricional Materno Infantil 👶  Estoy aquí para ayudarte con información educativa sobre nutrición y prevención de anemia en bebés de 6 a 12 meses.  ¿En qué puedo ayudarte hoy?`,
           esBot: true,
         },
       ]);
@@ -928,7 +942,7 @@ Estoy aquí para ayudarte con información educativa sobre nutrición y prevenci
     if (!valorEntrada.trim()) return;
 
     const mensajeUsuario = valorEntrada.trim();
-    
+
     if (!chatActualId) {
       crearNuevoChat();
       // Esperar un momento para que se cree el chat
