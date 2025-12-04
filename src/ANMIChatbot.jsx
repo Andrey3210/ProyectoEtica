@@ -16,8 +16,8 @@ import {
   Settings,
   ArrowDown,
 } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';          
-import remarkGfm from 'remark-gfm';                  
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { buscarRespuesta } from './MotorConocimiento';
 import { obtenerRespuestaInteligente, setForzarModoOffline } from './services/geminiService';
 import './styles/ChatStyles.css';
@@ -75,7 +75,6 @@ const MensajeChat = ({ mensaje, esBot, temaOscuro }) => (
           : '0 4px 16px rgba(25, 135, 84, 0.3)',
       }}
     >
-      {/* 👇 Wrapper con clase, sin usar className en ReactMarkdown */}
       <div className="mb-0" style={{ lineHeight: '1.7' }}>
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
@@ -110,7 +109,6 @@ const MensajeChat = ({ mensaje, esBot, temaOscuro }) => (
   </div>
 );
 
-
 const AvisoResponsabilidad = ({ alAceptar }) => (
   <div
     className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center animate-fade-in"
@@ -121,7 +119,6 @@ const AvisoResponsabilidad = ({ alAceptar }) => (
       style={{ maxWidth: '420px', width: '90%' }}
     >
       <div className="text-center mb-3">
-        {/* Logo San Marcos */}
         <img
           src={`${process.env.PUBLIC_URL}/sanMarcos.png`}
           alt="Logo Universidad Nacional Mayor de San Marcos"
@@ -754,14 +751,15 @@ export default function ChatbotANMI({ estaOffline = false }) {
   );
 
   const [temaOscuro, setTemaOscuro] = useState(false);
-
   const [tamanoFuente, setTamanoFuente] = useState(16);
-
   const [forzarOffline, setForzarOffline] = useState(false);
-
   const [cargandoDatos, setCargandoDatos] = useState(true);
-
   const [mostrarBotonBajar, setMostrarBotonBajar] = useState(false);
+
+  // ⭐ NUEVO: estados para instalación PWA
+  const [esInstalable, setEsInstalable] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [appInstalada, setAppInstalada] = useState(false);
 
   const finMensajesRef = useRef(null);
   const contenedorChatRef = useRef(null);
@@ -818,7 +816,6 @@ export default function ChatbotANMI({ estaOffline = false }) {
       font_size: tamanoFuente.toString(),
       forzar_offline: forzarOffline.toString(),
     });
-    // Actualizar el servicio de Gemini
     setForzarModoOffline(forzarOffline);
   }, [temaOscuro, tamanoFuente, forzarOffline, cargandoDatos]);
 
@@ -879,6 +876,39 @@ export default function ChatbotANMI({ estaOffline = false }) {
       ]);
     }
   }, [mostrarAviso, chatActualId]);
+
+  // ⭐ NUEVO: detección de instalabilidad PWA
+  useEffect(() => {
+    const manejarBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setEsInstalable(true); // 👉 Solo aquí mostramos el mensaje/botón
+    };
+
+    const manejarInstalada = () => {
+      setAppInstalada(true);
+      setEsInstalable(false);
+      setDeferredPrompt(null);
+    };
+
+    window.addEventListener('beforeinstallprompt', manejarBeforeInstallPrompt);
+    window.addEventListener('appinstalled', manejarInstalada);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', manejarBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', manejarInstalada);
+    };
+  }, []);
+
+  const manejarInstalarPWA = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setEsInstalable(false);
+      setDeferredPrompt(null);
+    }
+  };
 
   const crearNuevoChat = () => {
     const nuevoChat = {
@@ -945,7 +975,6 @@ export default function ChatbotANMI({ estaOffline = false }) {
 
     if (!chatActualId) {
       crearNuevoChat();
-      // Esperar un momento para que se cree el chat
       setTimeout(async () => {
         setMensajes([{ texto: mensajeUsuario, esBot: false }]);
         setValorEntrada('');
@@ -968,7 +997,6 @@ export default function ChatbotANMI({ estaOffline = false }) {
           console.error('Error al obtener respuesta:', error);
           setEstaEscribiendo(false);
           setUsandoIA(false);
-          // Fallback al motor offline
           const respuestaOffline = buscarRespuesta(mensajeUsuario);
           setMensajes((prev) => [
             ...prev,
@@ -979,14 +1007,12 @@ export default function ChatbotANMI({ estaOffline = false }) {
       return;
     }
 
-    // Agregar mensaje del usuario
     setMensajes((prev) => [...prev, { texto: mensajeUsuario, esBot: false }]);
     setValorEntrada('');
     setEstaEscribiendo(true);
     setUsandoIA(!estaOffline);
 
     try {
-      // Obtener respuesta inteligente (Gemini si hay conexión, offline si no)
       const respuesta = await obtenerRespuestaInteligente(
         mensajeUsuario,
         mensajes,
@@ -1002,7 +1028,6 @@ export default function ChatbotANMI({ estaOffline = false }) {
       console.error('Error al obtener respuesta:', error);
       setEstaEscribiendo(false);
       setUsandoIA(false);
-      // Fallback al motor offline
       const respuestaOffline = buscarRespuesta(mensajeUsuario);
       setMensajes((prev) => [
         ...prev,
@@ -1102,7 +1127,7 @@ export default function ChatbotANMI({ estaOffline = false }) {
           color: temaOscuro ? '#e2e8f0' : '#1a202c',
         }}
       >
-        {/* Header fijo */}
+        {/* Header */}
         <div
           className="text-white p-3 gradient-header"
           style={{
@@ -1164,6 +1189,32 @@ export default function ChatbotANMI({ estaOffline = false }) {
                   <p className="mb-0 small" style={{ opacity: 0.95 }}>
                     Asistente Nutricional Materno Infantil
                   </p>
+
+                  {/* ⭐ MENSAJE SOLO CUANDO SE PUEDE INSTALAR */}
+                  {esInstalable && !appInstalada && (
+                    <div className="mt-2 d-flex align-items-center gap-2">
+                      <p className="mb-0 small" style={{ opacity: 0.95 }}>
+                        ✅ Tu conexión está lista, puedes instalar ANMI como app en tu dispositivo.
+                      </p>
+                      <button
+                        onClick={manejarInstalarPWA}
+                        className="btn btn-sm btn-light py-1 px-2"
+                        style={{
+                          borderRadius: '999px',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        📲 Instalar
+                      </button>
+                    </div>
+                  )}
+
+                  {appInstalada && (
+                    <p className="mb-0 small mt-2" style={{ opacity: 0.8 }}>
+                      🎉 ANMI se instaló en tu dispositivo.
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -1187,7 +1238,7 @@ export default function ChatbotANMI({ estaOffline = false }) {
           </div>
         </div>
 
-        {/* Área de Chat scrollable */}
+        {/* Área de Chat */}
         <div
           ref={contenedorChatRef}
           className="flex-grow-1 overflow-auto p-3 position-relative"
@@ -1323,7 +1374,7 @@ export default function ChatbotANMI({ estaOffline = false }) {
           </div>
         </div>
 
-        {/* Botón flotante para bajar al final - encima del input */}
+        {/* Botón flotante para bajar al final */}
         <div
           className="position-relative"
           style={{
@@ -1361,7 +1412,7 @@ export default function ChatbotANMI({ estaOffline = false }) {
           )}
         </div>
 
-        {/* Input fijo abajo */}
+        {/* Input */}
         <div
           className="p-3"
           style={{
