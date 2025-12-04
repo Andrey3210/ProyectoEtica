@@ -1,0 +1,15 @@
+# Configuración de Netlify para React App
+
+[build]
+  # Comando para construir la aplicación
+  command = "npm run build"
+  
+  # Directorio donde se genera el build
+  publish = "build"
+
+# Configuración de redirecciones para React Router (si lo usas en el futuro)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+

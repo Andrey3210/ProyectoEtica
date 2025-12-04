@@ -16,6 +16,8 @@ import {
   Settings,
   ArrowDown,
 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { buscarRespuesta } from './MotorConocimiento';
 import { obtenerRespuestaInteligente, setForzarModoOffline } from './services/geminiService';
 import './styles/ChatStyles.css';
@@ -36,9 +38,8 @@ const TIPS_NUTRICION = [
 
 const MensajeChat = ({ mensaje, esBot, temaOscuro }) => (
   <div
-    className={`d-flex mb-3 animate-fade-in ${
-      esBot ? 'justify-content-start' : 'justify-content-end'
-    }`}
+    className={`d-flex mb-3 animate-fade-in ${esBot ? 'justify-content-start' : 'justify-content-end'
+      }`}
   >
     {esBot && (
       <div
@@ -54,6 +55,7 @@ const MensajeChat = ({ mensaje, esBot, temaOscuro }) => (
         <Bot className="text-white" size={20} />
       </div>
     )}
+
     <div
       className="px-4 py-3 rounded-4 animate-slide-up"
       style={{
@@ -72,10 +74,23 @@ const MensajeChat = ({ mensaje, esBot, temaOscuro }) => (
           : '0 4px 16px rgba(25, 135, 84, 0.3)',
       }}
     >
-      <p className="mb-0" style={{ whiteSpace: 'pre-line', lineHeight: '1.7' }}>
-        {mensaje}
-      </p>
+      <div className="mb-0" style={{ lineHeight: '1.7' }}>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
+            p: ({ node, ...props }) => (
+              <p {...props} style={{ marginBottom: '0.5rem', lineHeight: '1.7' }} />
+            ),
+            li: ({ node, ...props }) => (
+              <li {...props} style={{ marginBottom: '0.25rem', lineHeight: '1.7' }} />
+            ),
+          }}
+        >
+          {mensaje}
+        </ReactMarkdown>
+      </div>
     </div>
+
     {!esBot && (
       <div
         className="rounded-circle d-flex align-items-center justify-content-center ms-2"
@@ -103,7 +118,6 @@ const AvisoResponsabilidad = ({ alAceptar }) => (
       style={{ maxWidth: '420px', width: '90%' }}
     >
       <div className="text-center mb-3">
-        {/* Logo San Marcos desde public */}
         <img
           src={`${process.env.PUBLIC_URL}/sanMarcos.png`}
           alt="Logo Universidad Nacional Mayor de San Marcos"
@@ -736,14 +750,15 @@ export default function ChatbotANMI({ estaOffline = false }) {
   );
 
   const [temaOscuro, setTemaOscuro] = useState(false);
-
   const [tamanoFuente, setTamanoFuente] = useState(16);
-
   const [forzarOffline, setForzarOffline] = useState(false);
-
   const [cargandoDatos, setCargandoDatos] = useState(true);
-
   const [mostrarBotonBajar, setMostrarBotonBajar] = useState(false);
+
+  // ⭐ NUEVO: estados para instalación PWA
+  const [esInstalable, setEsInstalable] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [appInstalada, setAppInstalada] = useState(false);
 
   const finMensajesRef = useRef(null);
   const contenedorChatRef = useRef(null);
@@ -800,22 +815,21 @@ export default function ChatbotANMI({ estaOffline = false }) {
       font_size: tamanoFuente.toString(),
       forzar_offline: forzarOffline.toString(),
     });
-    // Actualizar el servicio de Gemini
     setForzarModoOffline(forzarOffline);
   }, [temaOscuro, tamanoFuente, forzarOffline, cargandoDatos]);
 
   // Actualizar mensajes en el chat actual cada vez que cambian
   useEffect(() => {
     if (!chatActualId || mensajes.length === 0) return;
-    
+
     setChats((prevChats) => {
       const chatsActualizados = prevChats.map((chat) =>
         chat.id === chatActualId
           ? {
-              ...chat,
-              mensajes: [...mensajes],
-              ultimaActualizacion: new Date().toISOString(),
-            }
+            ...chat,
+            mensajes: [...mensajes],
+            ultimaActualizacion: new Date().toISOString(),
+          }
           : chat
       );
       return chatsActualizados;
@@ -833,7 +847,7 @@ export default function ChatbotANMI({ estaOffline = false }) {
   // Detectar si el usuario está cerca del final del chat
   useEffect(() => {
     const contenedor = contenedorChatRef.current;
-    
+
     if (!contenedor) return;
 
     const manejarScroll = () => {
@@ -845,7 +859,7 @@ export default function ChatbotANMI({ estaOffline = false }) {
 
     contenedor.addEventListener('scroll', manejarScroll);
     setTimeout(() => manejarScroll(), 100);
-    
+
     return () => {
       contenedor.removeEventListener('scroll', manejarScroll);
     };
@@ -855,16 +869,45 @@ export default function ChatbotANMI({ estaOffline = false }) {
     if (!mostrarAviso && mensajes.length === 0 && chatActualId) {
       setMensajes([
         {
-          texto: `¡Hola! Soy ANMI, tu Asistente Nutricional Materno Infantil 👶
-
-Estoy aquí para ayudarte con información educativa sobre nutrición y prevención de anemia en bebés de 6 a 12 meses.
-
-¿En qué puedo ayudarte hoy?`,
+          texto: `¡Hola! Soy ANMI, tu Asistente Nutricional Materno Infantil 👶  Estoy aquí para ayudarte con información educativa sobre nutrición y prevención de anemia en bebés de 6 a 12 meses.  ¿En qué puedo ayudarte hoy?`,
           esBot: true,
         },
       ]);
     }
   }, [mostrarAviso, chatActualId]);
+
+  // ⭐ NUEVO: detección de instalabilidad PWA
+  useEffect(() => {
+    const manejarBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setEsInstalable(true); // 👉 Solo aquí mostramos el mensaje/botón
+    };
+
+    const manejarInstalada = () => {
+      setAppInstalada(true);
+      setEsInstalable(false);
+      setDeferredPrompt(null);
+    };
+
+    window.addEventListener('beforeinstallprompt', manejarBeforeInstallPrompt);
+    window.addEventListener('appinstalled', manejarInstalada);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', manejarBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', manejarInstalada);
+    };
+  }, []);
+
+  const manejarInstalarPWA = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setEsInstalable(false);
+      setDeferredPrompt(null);
+    }
+  };
 
   const crearNuevoChat = () => {
     const nuevoChat = {
@@ -928,10 +971,9 @@ Estoy aquí para ayudarte con información educativa sobre nutrición y prevenci
     if (!valorEntrada.trim()) return;
 
     const mensajeUsuario = valorEntrada.trim();
-    
+
     if (!chatActualId) {
       crearNuevoChat();
-      // Esperar un momento para que se cree el chat
       setTimeout(async () => {
         setMensajes([{ texto: mensajeUsuario, esBot: false }]);
         setValorEntrada('');
@@ -954,7 +996,6 @@ Estoy aquí para ayudarte con información educativa sobre nutrición y prevenci
           console.error('Error al obtener respuesta:', error);
           setEstaEscribiendo(false);
           setUsandoIA(false);
-          // Fallback al motor offline
           const respuestaOffline = buscarRespuesta(mensajeUsuario);
           setMensajes((prev) => [
             ...prev,
@@ -965,14 +1006,12 @@ Estoy aquí para ayudarte con información educativa sobre nutrición y prevenci
       return;
     }
 
-    // Agregar mensaje del usuario
     setMensajes((prev) => [...prev, { texto: mensajeUsuario, esBot: false }]);
     setValorEntrada('');
     setEstaEscribiendo(true);
     setUsandoIA(!estaOffline);
 
     try {
-      // Obtener respuesta inteligente (Gemini si hay conexión, offline si no)
       const respuesta = await obtenerRespuestaInteligente(
         mensajeUsuario,
         mensajes,
@@ -988,7 +1027,6 @@ Estoy aquí para ayudarte con información educativa sobre nutrición y prevenci
       console.error('Error al obtener respuesta:', error);
       setEstaEscribiendo(false);
       setUsandoIA(false);
-      // Fallback al motor offline
       const respuestaOffline = buscarRespuesta(mensajeUsuario);
       setMensajes((prev) => [
         ...prev,
@@ -1088,7 +1126,7 @@ Estoy aquí para ayudarte con información educativa sobre nutrición y prevenci
           color: temaOscuro ? '#e2e8f0' : '#1a202c',
         }}
       >
-        {/* Header fijo */}
+        {/* Header */}
         <div
           className="text-white p-3 gradient-header"
           style={{
@@ -1150,6 +1188,27 @@ Estoy aquí para ayudarte con información educativa sobre nutrición y prevenci
                   <p className="mb-0 small" style={{ opacity: 0.95 }}>
                     Asistente Nutricional Materno Infantil
                   </p>
+
+                  {/* 🔹 SOLO se muestra mensaje + botón si REALMENTE se puede instalar */}
+                  {esInstalable && !appInstalada && (
+                    <div className="mt-2 d-flex align-items-center gap-2">
+                      <p className="mb-0 small" style={{ opacity: 0.95 }}>
+                        📲 Puedes instalar ANMI como aplicación en tu dispositivo.
+                      </p>
+                      <button
+                        onClick={manejarInstalarPWA}
+                        className="btn btn-sm btn-light py-1 px-2"
+                        style={{
+                          borderRadius: '999px',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        Instalar
+                      </button>
+                    </div>
+                  )}
+                  {/* 🔸 Después de instalar, NO mostramos nada extra */}
                 </div>
               </div>
 
@@ -1173,7 +1232,8 @@ Estoy aquí para ayudarte con información educativa sobre nutrición y prevenci
           </div>
         </div>
 
-        {/* Área de Chat scrollable */}
+
+        {/* Área de Chat */}
         <div
           ref={contenedorChatRef}
           className="flex-grow-1 overflow-auto p-3 position-relative"
@@ -1206,7 +1266,7 @@ Estoy aquí para ayudarte con información educativa sobre nutrición y prevenci
                   onClick={() => {
                     const random =
                       TIPS_NUTRICION[
-                        Math.floor(Math.random() * TIPS_NUTRICION.length)
+                      Math.floor(Math.random() * TIPS_NUTRICION.length)
                       ];
                     setTipActual(random);
                   }}
@@ -1309,7 +1369,7 @@ Estoy aquí para ayudarte con información educativa sobre nutrición y prevenci
           </div>
         </div>
 
-        {/* Botón flotante para bajar al final - encima del input */}
+        {/* Botón flotante para bajar al final */}
         <div
           className="position-relative"
           style={{
@@ -1347,7 +1407,7 @@ Estoy aquí para ayudarte con información educativa sobre nutrición y prevenci
           )}
         </div>
 
-        {/* Input fijo abajo */}
+        {/* Input */}
         <div
           className="p-3"
           style={{
@@ -1416,8 +1476,8 @@ Estoy aquí para ayudarte con información educativa sobre nutrición y prevenci
                   background: valorEntrada.trim()
                     ? 'linear-gradient(135deg, #198754, #157347)'
                     : temaOscuro
-                    ? '#4a5568'
-                    : '#e9ecef',
+                      ? '#4a5568'
+                      : '#e9ecef',
                   color: valorEntrada.trim() ? '#ffffff' : temaOscuro ? '#718096' : '#adb5bd',
                   border: 'none',
                   height: '46px',

@@ -1,13 +1,53 @@
-<<<<<<< HEAD
-# Getting Started with Create React App
+# ProyectoEtica - ANMI Chatbot
+
+Asistente Nutricional Materno Infantil desarrollado por la Universidad Nacional Mayor de San Marcos.
+
+## ⚠️ Configuración de Seguridad - IMPORTANTE
+
+**NUNCA commitees claves API en el código fuente.** Este proyecto usa variables de entorno para proteger las credenciales.
+
+### Configuración de Variables de Entorno
+
+1. Crea un archivo `.env` en la raíz del proyecto (junto a `package.json`)
+2. Agrega tu clave API de Google Gemini:
+
+```env
+REACT_APP_GEMINI_API_KEY=tu_clave_api_aqui
+```
+
+3. **IMPORTANTE**: 
+   - El archivo `.env` está en `.gitignore` y NO debe ser commiteado
+   - Obtén tu clave API en: https://makersuite.google.com/app/apikey
+   - Si tu clave API fue expuesta, revócala inmediatamente y genera una nueva
+
+### Configuración para Netlify (Producción)
+
+Si estás usando Netlify para hostear tu aplicación:
+
+1. Ve a tu sitio en Netlify → **Site settings** → **Environment variables**
+2. Agrega la variable:
+   - **Key**: `REACT_APP_GEMINI_API_KEY`
+   - **Value**: Tu clave API
+3. **IMPORTANTE**: Después de agregar/modificar variables de entorno, debes **re-desplegar** el sitio
+
+Ver la guía completa en [NETLIFY.md](./NETLIFY.md)
+
+### Verificación de Seguridad
+
+- ✅ Las claves API están en variables de entorno
+- ✅ El archivo `.env` está excluido de git
+- ✅ No hay claves hardcodeadas en el código
+- ✅ Variables de entorno configuradas en Netlify (producción)
+
+## Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-## Available Scripts
+### Available Scripts
 
 In the project directory, you can run:
 
-### `npm start`
+#### `npm start`
 
 Runs the app in the development mode.\
 Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
@@ -15,12 +55,12 @@ Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 The page will reload when you make changes.\
 You may also see any lint errors in the console.
 
-### `npm test`
+#### `npm test`
 
 Launches the test runner in the interactive watch mode.\
 See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
 
-### `npm run build`
+#### `npm run build`
 
 Builds the app for production to the `build` folder.\
 It correctly bundles React in production mode and optimizes the build for the best performance.
@@ -30,7 +70,7 @@ Your app is ready to be deployed!
 
 See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
 
-### `npm run eject`
+#### `npm run eject`
 
 **Note: this is a one-way operation. Once you `eject`, you can't go back!**
 
@@ -69,7 +109,3 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
-=======
-# ProyectoEtica
-
->>>>>>> 6d36f6b35283b2065581eda3eff94510553b809b
