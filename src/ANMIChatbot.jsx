@@ -38,9 +38,8 @@ const TIPS_NUTRICION = [
 
 const MensajeChat = ({ mensaje, esBot, temaOscuro }) => (
   <div
-    className={`d-flex mb-3 animate-fade-in ${
-      esBot ? 'justify-content-start' : 'justify-content-end'
-    }`}
+    className={`d-flex mb-3 animate-fade-in ${esBot ? 'justify-content-start' : 'justify-content-end'
+      }`}
   >
     {esBot && (
       <div
@@ -827,10 +826,10 @@ export default function ChatbotANMI({ estaOffline = false }) {
       const chatsActualizados = prevChats.map((chat) =>
         chat.id === chatActualId
           ? {
-              ...chat,
-              mensajes: [...mensajes],
-              ultimaActualizacion: new Date().toISOString(),
-            }
+            ...chat,
+            mensajes: [...mensajes],
+            ultimaActualizacion: new Date().toISOString(),
+          }
           : chat
       );
       return chatsActualizados;
@@ -1190,11 +1189,11 @@ export default function ChatbotANMI({ estaOffline = false }) {
                     Asistente Nutricional Materno Infantil
                   </p>
 
-                  {/* ⭐ MENSAJE SOLO CUANDO SE PUEDE INSTALAR */}
+                  {/* 🔹 SOLO se muestra mensaje + botón si REALMENTE se puede instalar */}
                   {esInstalable && !appInstalada && (
                     <div className="mt-2 d-flex align-items-center gap-2">
                       <p className="mb-0 small" style={{ opacity: 0.95 }}>
-                        ✅ Tu conexión está lista, puedes instalar ANMI como app en tu dispositivo.
+                        📲 Puedes instalar ANMI como aplicación en tu dispositivo.
                       </p>
                       <button
                         onClick={manejarInstalarPWA}
@@ -1205,16 +1204,11 @@ export default function ChatbotANMI({ estaOffline = false }) {
                           fontWeight: 600,
                         }}
                       >
-                        📲 Instalar
+                        Instalar
                       </button>
                     </div>
                   )}
-
-                  {appInstalada && (
-                    <p className="mb-0 small mt-2" style={{ opacity: 0.8 }}>
-                      🎉 ANMI se instaló en tu dispositivo.
-                    </p>
-                  )}
+                  {/* 🔸 Después de instalar, NO mostramos nada extra */}
                 </div>
               </div>
 
@@ -1237,6 +1231,7 @@ export default function ChatbotANMI({ estaOffline = false }) {
             </div>
           </div>
         </div>
+
 
         {/* Área de Chat */}
         <div
@@ -1271,7 +1266,7 @@ export default function ChatbotANMI({ estaOffline = false }) {
                   onClick={() => {
                     const random =
                       TIPS_NUTRICION[
-                        Math.floor(Math.random() * TIPS_NUTRICION.length)
+                      Math.floor(Math.random() * TIPS_NUTRICION.length)
                       ];
                     setTipActual(random);
                   }}
@@ -1481,8 +1476,8 @@ export default function ChatbotANMI({ estaOffline = false }) {
                   background: valorEntrada.trim()
                     ? 'linear-gradient(135deg, #198754, #157347)'
                     : temaOscuro
-                    ? '#4a5568'
-                    : '#e9ecef',
+                      ? '#4a5568'
+                      : '#e9ecef',
                   color: valorEntrada.trim() ? '#ffffff' : temaOscuro ? '#718096' : '#adb5bd',
                   border: 'none',
                   height: '46px',
