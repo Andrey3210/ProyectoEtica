@@ -1,75 +1,138 @@
-<<<<<<< HEAD
-# Getting Started with Create React App
+# ANMI – Asistente Nutricional Materno Infantil
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+ANMI es una aplicación web tipo **chatbot** desarrollada como proyecto académico por estudiantes de la **Facultad de Ingeniería de Sistemas e Informática (FISI) – UNMSM**, con apoyo de la Facultad de Nutrición, orientada a brindar **información educativa** sobre:
 
-## Available Scripts
+- Nutrición infantil (0 a 24 meses)
+- Prevención y manejo informativo de **anemia** en bebés (especialmente 6–12 meses)
+- Lactancia materna y alimentación complementaria
+- Preparación segura de alimentos
 
-In the project directory, you can run:
+> ⚠️ **Aviso importante:** ANMI es una herramienta educativa. **No reemplaza** la atención profesional, **no diagnostica** y **no receta** medicamentos/suplementos ni genera dietas personalizadas.
 
-### `npm start`
+---
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## ✨ Funcionalidades principales
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- ✅ **Chat tipo mensajería** con UI moderna (modo claro/oscuro y animaciones)
+- ✅ Renderizado de respuestas con **Markdown** (listas, negritas, links, etc.)
+- ✅ **Motor híbrido**:
+  - **Online (Gemini)** cuando hay conexión
+  - **Fallback Offline** con motor local (`MotorConocimiento`)
+- ✅ **Persistencia de chats** en el navegador (IndexedDB) con:
+  - múltiples chats
+  - renombrar, eliminar
+  - marcar como favorito ⭐
+  - buscador por nombre y contenido
+- ✅ **Preferencias del usuario** guardadas:
+  - tema (claro/oscuro)
+  - tamaño de fuente
+  - forzar modo offline
+- ✅ **Exportar historial** de chat a `.txt`
+- ✅ Lector de voz (Text-to-Speech) para el último mensaje del bot
+- ✅ Botón flotante para bajar al final del chat
+- ✅ **Detección e instalación PWA** (si el navegador lo permite)
 
-### `npm test`
+---
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 🧩 Arquitectura (alto nivel)
 
-### `npm run build`
+**Frontend (React)**
+- Componente principal: `ChatbotANMI`
+- UI modular:
+  - `Sidebar` (lista de chats)
+  - `SubmenuSettings` (configuración)
+  - `PanelInformacion` (ayuda y recursos)
+  - `AvisoResponsabilidad` (modal inicial)
+  - `MensajeChat` (render de mensajes con Markdown)
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+**Servicios**
+- `services/geminiService`
+  - `obtenerRespuestaInteligente(...)`
+  - `setForzarModoOffline(...)`
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+**Motor Offline**
+- `MotorConocimiento`
+  - `buscarRespuesta(...)`
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+**Persistencia**
+- `utils/storage`
+  - `cargarChats`, `guardarChats`
+  - `cargarPreferencias`, `guardarPreferencias`
 
-### `npm run eject`
+---
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## 🛠️ Stack tecnológico
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- **React** (Hooks: useState, useEffect, useRef)
+- **Lucide React** (iconos)
+- **React Markdown** + **remark-gfm** (Markdown + tablas/listas)
+- **IndexedDB** (persistencia local)
+- **PWA events**: `beforeinstallprompt`, `appinstalled`
+- **Web Speech API** (lector de voz)
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+---
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## 📦 Instalación y ejecución
 
-## Learn More
+### 1) Clonar e instalar dependencias
+```bash
+npm install
+2) Variables de entorno (opcional para modo online)
+Crea un archivo .env en la raíz del proyecto:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+env
+Copiar código
+REACT_APP_GEMINI_API_KEY=TU_API_KEY
+Si no configuras la API Key o no hay conexión, el bot usará el motor offline como fallback.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+3) Ejecutar en desarrollo
+bash
+Copiar código
+npm run dev
+o si el proyecto usa CRA:
 
-### Code Splitting
+bash
+Copiar código
+npm start
+📴 Modo Offline (Forzar)
+Desde el panel de Configuración puedes activar:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+Forzar modo offline (solo motor local)
+Esto deshabilita Gemini y mantiene respuestas únicamente del motor local.
 
-### Analyzing the Bundle Size
+🧪 Exportar historial
+En Configuración → Exportar chat, puedes descargar un archivo:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+chat-anmi.txt
+Con todas las preguntas y respuestas separadas por divisores.
 
-### Making a Progressive Web App
+📲 Instalación como PWA
+Si el navegador lo permite, ANMI mostrará un aviso en el header:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+“📲 Puedes instalar ANMI como aplicación...”
 
-### Advanced Configuration
+Botón Instalar
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+Esto se activa únicamente cuando se dispara el evento beforeinstallprompt.
 
-### Deployment
+📚 Recursos sugeridos (links dentro de la app)
+Ministerio de Salud del Perú (MINSA): https://www.gob.pe/minsa
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+Organización Mundial de la Salud (OMS): https://www.who.int/es
 
-### `npm run build` fails to minify
+🧑‍💻 Autores
+Andrey Zafra
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
-=======
-# ProyectoEtica
+Sebastian Tejeda
 
->>>>>>> 6d36f6b35283b2065581eda3eff94510553b809b
+Estefano Ramirez
+
+Luis Quispe
+
+Maleck Ramirez
+
+Christian Cabrejos
+
+Rodrigo Dulanto
+
+Luis Bizarro
